@@ -1,13 +1,15 @@
 import multer from "multer";
-
-const storage = multer.diskStorage({
+var storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, "/src");
+    // destination is used to specify the path of the directory in which the files have to be stored
+    cb(null, "./uploads");
   },
   filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, file.originalname + "-" + uniqueSuffix);
+    // It is the filename that is given to the saved file.
+    cb(null, file.originalname);
   },
 });
 
-export const upload = multer({ storage: storage });
+// Configure storage engine instead of dest object.
+const upload = multer({ storage: storage });
+export default upload;

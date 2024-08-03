@@ -5,6 +5,7 @@ import config from "../utils/config.js";
 const signup = async (req, res) => {
   try {
     const { email, password, username, gender } = req.body;
+    console.log(req.file);
     if ([email, password, username, gender].some((field) => field.trim == "")) {
       return res
         .status(400)
@@ -22,6 +23,10 @@ const signup = async (req, res) => {
         .status(400)
         .json({ message: "invalid the user email exists chooses a new email" });
     }
+    const avatarLocalPath = req.file?.path;
+    if (!avatarLocalPath) {
+      return res.status(400).json({ message: "multer failed" });
+    }
     const hashedPassword = await bcrypt.hash(password, 12);
     if (!hashedPassword) {
       return res.status(400).json({ message: "invalid hashing has failed" });
@@ -31,6 +36,7 @@ const signup = async (req, res) => {
       password: hashedPassword,
       email,
       gender,
+      avatar: avatarLocalPath,
     });
     if (!user) {
       return res.status(400).json({ message: " The user creation has failed" });
@@ -45,7 +51,7 @@ const signup = async (req, res) => {
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
-
+    console.log(req.body);
     if (
       [email, password].some((field) => {
         field.trim() == "";
@@ -152,4 +158,41 @@ const getUserDetails = async (req, res) => {
     });
   }
 };
-export { signup, login, changePassword, getUserDetails };
+const changeAvatar = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    if (!userId) {
+      return res.status(400).json({
+        message: "the access token did not sucessfully return a user id ",
+      });
+    }
+    const newAvatarPath = req.file.path;
+    if (!newAvatarPath) {
+      return res.status(400).json({
+        message: "the new Avatar path doesnt exist ",
+      });
+    }
+    const UpdatedUser = await User.findByIdAndUpdate(
+      userId,
+      {
+        $set: {
+          avatar: newAvatarPath,
+        },
+      },
+      { new: true }
+    );
+    if (!UpdatedUser) {
+      return res.status(400).json({
+        message: "there is no user ",
+      });
+    }
+    return res
+      .status(200)
+      .json({ message: "sucessfully changed the avatar", data: UpdatedUser });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Server failure when changing the Avatar ",
+    });
+  }
+};
+export { signup, login, changePassword, getUserDetails, changeAvatar };
